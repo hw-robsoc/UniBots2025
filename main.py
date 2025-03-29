@@ -8,21 +8,29 @@ GPIO.setmode(GPIO.BCM)
 TRIG_FRONT = 17
 ECHO_FRONT = 18
 
-TRIG_LEFT = 22
-ECHO_LEFT = 23
+TRIG_UP = 22
+ECHO_UP = 23
 
-TRIG_RIGHT = 24
-ECHO_RIGHT = 25
+TRIG_DOWN = 24
+ECHO_DOWN = 25
+
+TRIG_BACK = 16
+ECHO_BACK = 27
+
+
 
 # Set the GPIO pins for trigger as output, echo as input
 GPIO.setup(TRIG_FRONT, GPIO.OUT)
 GPIO.setup(ECHO_FRONT, GPIO.IN)
 
-GPIO.setup(TRIG_LEFT, GPIO.OUT)
-GPIO.setup(ECHO_LEFT, GPIO.IN)
+GPIO.setup(TRIG_UP, GPIO.OUT)
+GPIO.setup(ECHO_UP, GPIO.IN)
 
-GPIO.setup(TRIG_RIGHT, GPIO.OUT)
-GPIO.setup(ECHO_RIGHT, GPIO.IN)
+GPIO.setup(TRIG_DOWN, GPIO.OUT)
+GPIO.setup(ECHO_DOWN, GPIO.IN)
+
+GPIO.setup(TRIG_BACK, GPIO.OUT)
+GPIO.setup(ECHO_BACK,GPIO.IN)
 
 # Set up motor control pins
 # Left motor (Motor 1)
@@ -59,12 +67,11 @@ def get_distance(trigger_pin, echo_pin):
     time.sleep(0.00001)  # 10us pulse
     GPIO.output(trigger_pin, GPIO.LOW)
     
-    # Measure the time taken for the echo to return
     while GPIO.input(echo_pin) == GPIO.LOW:
-        pulse_start = time.time()
-    
+        pulse_start = time.time()  # Capture start time when pulse is sent
+
     while GPIO.input(echo_pin) == GPIO.HIGH:
-        pulse_end = time.time()
+        pulse_end = time.time()  # Capture end time when echo is received
     
     pulse_duration = pulse_end - pulse_start
     distance = pulse_duration * 17150  # Speed of sound is 34300 cm/s, so divide by 2 for round trip
@@ -110,12 +117,14 @@ def stop_motors():
 def check_surroundings():
     # Measure distances from all three sensors
     distance_front = get_distance(TRIG_FRONT, ECHO_FRONT)
-    distance_left = get_distance(TRIG_LEFT, ECHO_LEFT)
-    distance_right = get_distance(TRIG_RIGHT, ECHO_RIGHT)
-
+    distance_up = get_distance(TRIG_UP, ECHO_UP)
+    distance_down = get_distance(TRIG_DOWN, ECHO_DOWN)
+    distance_back = get_distance(TRIG_BACK,ECHO_BACK)
+    
     print(f"Front: {distance_front} cm")
-    print(f"Left: {distance_left} cm")
-    print(f"Right: {distance_right} cm")
+    print(f"Up: {distance_up} cm")
+    print(f"Down: {distance_down} cm")
+    print(f"Back: {distance_back} cm")
     
     # Define a safety threshold (in centimeters)
     safety_distance = 20
@@ -129,13 +138,13 @@ def check_surroundings():
         time.sleep(1)
         turn_left()  # Turn left to avoid the obstacle
         time.sleep(1)
-    elif distance_left < safety_distance:
+    elif distance_up < safety_distance:
         print("Warning: Obstacle on the left!")
         stop_motors()
         # Turn right to avoid the obstacle
         turn_right()
         time.sleep(1)
-    elif distance_right < safety_distance:
+    elif distance_down < safety_distance:
         print("Warning: Obstacle on the right!")
         stop_motors()
         # Turn left to avoid the obstacle
